@@ -111,11 +111,7 @@ class HTTPClient(object):
         except:
             queries = ""
 
-        #print queries
-
         request = "GET " + file + queries + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n"
-
-        print request
 
         self.c_socket.send(request)
 
@@ -132,9 +128,6 @@ class HTTPClient(object):
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-
-        print ">>>>> " + url
-        print ">>>>> " + str(args)
 
         url = url.replace("http://", "")
 
@@ -159,8 +152,6 @@ class HTTPClient(object):
             data = ""
 
         request = "POST " + file + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: " + str(len(data)) + "\r\n\r\n" + data
-
-        print ">>>" + request
 
         self.c_socket.send(request)
 
