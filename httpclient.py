@@ -35,25 +35,29 @@ class HTTPResponse(object):
 class HTTPClient(object):
     #def get_host_port(self,url):
 
+    #Make socket class wide
     c_socket = None
 
     def connect(self, host, port=80):
 
+        #Remove any directory info from the host (eg. www.google.com/test becomes www.google.com) 
         host = host.split("/")
         host = host[0]
 
+        #Parse for hte port if there is one
         host_split = host.split(":")
-
         try:
             host = host_split[0]
             port = host_split[1]
         except:
             port = 80
 
+        #Make a new socket and connect to it via the host and port
         self.c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.c_socket.connect((str(host), int(port)))
 
     def get_code(self, data):
+        #Parse the HTTP response code from the message
         try:
             code = data.split(" ")
             code = int(code[1])
@@ -64,9 +68,11 @@ class HTTPClient(object):
         return code
 
     def get_headers(self,data):
+        #Unused? Doesn't really seem like it's needed... may add this in later
         return None
 
     def get_body(self, data):
+        #Return the body of the message
         try:
             body = data.split("\r\n\r\n", 1)
             body = body[1]
@@ -89,34 +95,44 @@ class HTTPClient(object):
 
     def GET(self, url, args=None):
         
+        #Strip out http:// if it's there
         url = url.replace("http://", "")
 
+        #Call connect function
         self.connect(url)
         
+        #Get everything after .com/. If there isn't, set file wanted to '/'
         url_split = url.split('/', 1)
         try:
             file = url_split[1]
         except:
             file = "/"
 
+        #Edge cases here depending on various server configurations
         if file == "":
             file = "/"
         if len(file) > 1 and file[0] != "/":
             file = "/" + file
 
+        #Get the host, necessary for HTTP header
         host = url_split[0]
 
+        #Convert querues to an encoded string
         try:
             queries = "?" + urllib.urlencode(args)
         except:
             queries = ""
 
+        #HTTP request for GET.
         request = "GET " + file + queries + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n"
 
+        #Send via socket
         self.c_socket.send(request)
 
+        #Returned value
         returned = self.recvall(self.c_socket)
 
+        #Return, set code/body, end socket
         print returned
         
         code = self.get_code(returned)
@@ -129,34 +145,44 @@ class HTTPClient(object):
 
     def POST(self, url, args=None):
 
+        #Strip out http:// if it's there
         url = url.replace("http://", "")
 
+        #Call connect function
         self.connect(url)
         
+        #Get everything after .com/. If there isn't, set file wanted to '/'
         url_split = url.split('/', 1)
         try:
             file = url_split[1]
         except:
             file = "/"
 
+        #Edge cases here depending on various server configurations
         if file == "":
             file = "/"
         if len(file) > 1 and file[0] != "/":
             file = "/" + file
 
+        #Get the host, necessary for HTTP header
         host = url_split[0]
 
+        #Convert querues to an encoded string
         try:
             data = urllib.urlencode(args)
         except:
             data = ""
 
+        #HTTP request for POST
         request = "POST " + file + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: " + str(len(data)) + "\r\n\r\n" + data
 
+        #Send via socket
         self.c_socket.send(request)
 
+        #Returned value
         returned = self.recvall(self.c_socket)
 
+        #Return, set code/body, end socket
         print returned
 
         code = self.get_code(returned)
